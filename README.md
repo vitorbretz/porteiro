@@ -107,3 +107,4 @@ EC2 Start/Stop Instances
 EventBridge Scheduled Events
 
 👨‍💻 Autor
+Vitor Bretz
