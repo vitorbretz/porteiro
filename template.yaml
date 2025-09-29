@@ -3,34 +3,58 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   porteiro
 
-  Sample SAM Template for porteiro
-  
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  Template SAM para iniciar e parar uma instância EC2 automaticamente.
+
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 3 # ⏳ Tempo máximo de execução da função Lambda (em segundos)
 
 Resources:
+  # 🚀 Função Lambda para ligar a instância EC2
   LigarPorteiro:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: hello-world/
-      Handler: src/handlers/porteiro.startEC2Instance
-      Runtime: nodejs22.x
+      Handler: src/handlers/porteiro.startEC2Instance # 🔧 Caminho do handler (altere se mudar a pasta/arquivo)
+      Runtime: nodejs22.x # 🔧 Runtime da Lambda (Node.js 22.x)
       Architectures:
         - x86_64
       Events:
         CloudwatchEvent:
-          Type: Schedule # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Schedule
           Properties:
-            Schedule:  cron(50, 10 ?, * MON-FRI *) 
+            # ⏰ Agendamento em formato CRON
+            # ➝ Aqui está configurado para rodar às 07:00 de segunda a sábado
+            # obs: sempre considera o horário UTC
+            
+            Schedule: cron(00 10 ? * MON-SAT *)
       Policies:
         - Statement:
             - Sid: StartEC2Instance
               Effect: Allow
               Action:
-                - ec2:StartInstances
-              Resource: "*"
-                 
+                - ec2:StartInstances # 🔑 Permissão necessária para ligar a EC2
+              Resource: "*" # ⚠️ Coloque o ARN específico da instância se quiser restringir
 
-
+  # 📴 Função Lambda para desligar a instância EC2
+  DesligarPorteiro:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/porteiro.stopEC2Instance # 🔧 Caminho do handler (altere se mudar a pasta/arquivo)
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Events:
+        CloudwatchEvent:
+          Type: Schedule
+          Properties:
+            # ⏰ Agendamento em formato CRON
+            # ➝ Aqui está configurado para parar as 18:00 de segunda a sábado
+            # obs: sempre considera o horário UTC
+            Schedule: cron(00 21 ? * MON-SAT *)
+      Policies:
+        - Statement:
+            - Sid: StopEC2Instance
+              Effect: Allow
+              Action:
+                - ec2:StopInstances # 🔑 Permissão necessária para desligar a EC2
+              Resource: "*" # ⚠️ Recomenda-se restringir ao ARN da instância
